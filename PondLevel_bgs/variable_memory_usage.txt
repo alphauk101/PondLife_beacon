@@ -1,4 +1,4 @@
-16
+63
 0:0	GAP_AD_FLAG_BREDR_NOT_SUPPORTED
 0:0	GAP_AD_FLAG_GENERAL_DISCOVERABLE
 0:0	GAP_AD_FLAG_LIMITED_DISCOVERABLE
@@ -82,3 +82,9 @@
 4:4	port
 8:4	pinState
 12:4	state
+16:4	counter
+20:21	advData
+41:9	respData
+50:4	celsius
+54:5	temperature
+59:4	offset

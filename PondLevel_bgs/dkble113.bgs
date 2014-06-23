@@ -2,73 +2,177 @@ dim resCode
 dim port
 dim pinState
 dim state
+dim counter
+dim advData(21)
+dim respData(9)
+dim celsius
+dim temperature(5)
+dim offset
 
 procedure switchLEDon()
-	call hardware_io_port_write(1, $01,1)(resCode)
+	call hardware_io_port_write(1, $01,0)(resCode)
 end
 procedure switchLEDoff()
-	call hardware_io_port_write(1, $01,0)(resCode)
+	call hardware_io_port_write(1, $01,1)(resCode)
+end
+
+procedure setRespData(innerState)
+	respData(0) = 7
+	respData(1) = $16 # Service data
+	respData(2) = $9A # 16 bit UUID (Or in our case the end of he uuid)
+	respData(3) = innerState #Set our state
+	#Data
+	call gap_set_adv_data(1,9, respData(0:9)) #Set response.
+end
+
+procedure setTempData()
+	#Data
+	respData(4) = temperature(0:1)
+	respData(5) = temperature(1:1)
+	respData(6) = temperature(2:1)
+	respData(7) = temperature(3:1)
+	respData(8) = temperature(4:1)
+	call gap_set_adv_data(1,9, respData(0:9)) #Set response.
+
+end
+
+#####This will enable and take all the readings for this beacon
+procedure takeReadings()
+	#call switchLEDon()
+	#First turn the transistor on
+	call hardware_io_port_write(1,$80,1)(resCode)
+	
+	while counter > 0
+		counter = counter - 1
+	end while
+	counter = 5
+	#now take a reading of the float switch.
+	call hardware_io_port_read(1,$40)(resCode,port,state)
+	#check the result code first
+	if resCode = 0 then
+		if state > 0 then
+			call setRespData($AA)
+		else
+			call setRespData($FF)#Failed
+		end if
+	else
+		call setRespData($FF) #This cant be a valid reading.
+		
+	end if
+	
+	#Turn transistor off
+	call hardware_io_port_write(1,$80,0)(resCode)
+	#call switchLEDoff()
 end
 
 
 #init gap mod, bonding and start freerunning times on system boot
 event system_boot(major ,minor ,patch ,build ,ll_version ,protocol_version ,hw )
 	#Set device to advertisement mode and allow undirected connections
-	call gap_set_mode(gap_general_discoverable,gap_undirected_connectable)
+
 	#Allow pairing
-	call sm_set_bondable_mode(1)
+	call sm_set_bondable_mode(0)
 	
 	#set timer to periodically create an interrupt with interval of 1s
-	call hardware_set_soft_timer($4000,0,0)
+	call hardware_set_soft_timer($f0000,0,0)
+	call gap_set_adv_parameters($1900,$3840, $03)
+	call gap_set_mode(gap_user_data,3)
+	#Set adv data.
+	advData(0) = 2 #length
+	advData(1) = $01 #Flags
+	advData(2) = $02 # General Discoverable
+	advData(3) = 17 #length
+	advData(4) = $07 
+	#UUID = a9 47 02 60 fa b3 11 e3 a3 ac 08 00 20 0c 9a 66
+	advData(5) = $A9
+	advData(6) = $47
+	advData(7) = $02
+	advData(8) = $60
+	advData(9) = $FA
+	advData(10) = $B3
+	advData(11) = $11
+	advData(12) = $E3
+	advData(13) = $A3
+	advData(14) = $AC
+	advData(15) = $08
+	advData(16) = $00
+	advData(17) = $20
+	advData(18) = $0C
+	advData(19) = $9A
+	advData(20) = $66
+
+	#Scan Response
+	respData(0) = 7
+	respData(1) = $16 # Service data
+	respData(2) = $9A # 16 bit UUID (Or in our case the end of he uuid)
+	respData(3) = $00
+	#Data
+	respData(4) = $00
+	respData(5) = $00
+	respData(6) = $00
+	respData(7) = $00
 	
-	#set the display to command mode
-	call hardware_io_port_write(1,$7,$1)
-	call hardware_io_port_config_direction(1,$7)
-	#initialize the display
-	call hardware_spi_transfer(0,11,"\x30\x30\x30\x39\x14\x56\x6d\x70\x0c\x06\x01")
-	# Change display cursor pos
-	call hardware_spi_transfer(0,1,"\x80")
-	#set the display to data mode
-	call hardware_io_port_write(1,$7,$3)
-	#Write temperature to display
-	call hardware_spi_transfer(0,16,"    DKBLE113    ")
+	call gap_set_adv_data(0,21,advData(0:21))
+	call gap_set_adv_data(1,9, respData(0:9)) #Set response.
 	
-	#set the display to command mode
-	call hardware_io_port_write(1,$7,$1)
-	# Change display cursor pos
-	call hardware_spi_transfer(0,1,"\xc0")
-	#set the display to data mode
-	call hardware_io_port_write(1,$7,$3)
-	#Write temperature to display
-	call hardware_spi_transfer(0,16,"GO!!!!!!!!!!!!!!")
+
 	
-	call hardware_io_port_config_direction(1,$01)
-	state = 0
-	call switchLEDon()
+	##########################Hardware configuration######################
+	#1 p7 = trans
+	#1 p6 = float sw
+	#1 p0 = LED
+	# 7654 3210
+	# 1000 0001
+	call hardware_io_port_config_direction(1,$81)
+
 	#Should config sets pin 1 to out and the rest to in.
+	#1 sec min - 10 sec - 2 channels
 	
 end
-
-
 
 #timer expired
 event hardware_soft_timer(handle)
-	#Request for ADC reading
-	call hardware_io_port_read(1,$01)(resCode,port,pinState)
-	if state = 0 then
 	call switchLEDon()
-	state = 1
-	else
-	call switchLEDoff()
-	state = 0
-	end if
 	
-	#call hardware_adc_read(14,3,0)
+	call takeReadings()
+	#Request for ADC reading for internal temp sense
+	call hardware_adc_read(14,3,0)
+	
+	call switchLEDoff()
 end
 
 
+#ADC measurement ready
+event hardware_adc_result(input,value)
 
-event connection_disconnected(handle,result)
-	#in case if disconnect, return to advertisement mode
-    call gap_set_mode(gap_general_discoverable,gap_undirected_connectable)
+	if input = 14 then
+
+		#This must be the temperature reading.
+		offset=-1600
+		# ADC value is 12 MSB
+		celsius = value / 16
+		# Calculate temperature
+		# ADC*V_ref/ADC_max / T_coeff + offset
+		celsius = (10*celsius*1150/2047) * 10/45 + offset
+
+		#set flags
+		#A1 being flag for internal temperature
+		temperature(0:1)=$A1
+		
+		#set as float
+		temperature(1:4)=float(celsius, -1)
+		
+		#write the temperature information to the GATT database
+		#call attributes_write(xgatt_htm_2a1c,0,5,temperature(0:5))
+		
+		#Extracting desimals from integer
+		#a = (celsius / 100)						#2X.X
+		#b = (celsius / 10) + (a*-10)			#X4.X
+		#c = (celsius)      + (a*-100) + (b*-10)	#XX.8
+		call setTempData()
+		
+	end if 
+
+	
 end
+

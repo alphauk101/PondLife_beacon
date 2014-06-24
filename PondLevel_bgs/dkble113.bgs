@@ -3,11 +3,13 @@ dim port
 dim pinState
 dim state
 dim counter
-dim advData(21)
-dim respData(9)
+dim advData(13)
+dim respData(11)
 dim celsius
 dim temperature(5)
 dim offset
+dim battADC
+
 
 procedure switchLEDon()
 	call hardware_io_port_write(1, $01,0)(resCode)
@@ -22,17 +24,25 @@ procedure setRespData(innerState)
 	respData(2) = $9A # 16 bit UUID (Or in our case the end of he uuid)
 	respData(3) = innerState #Set our state
 	#Data
-	call gap_set_adv_data(1,9, respData(0:9)) #Set response.
+	call gap_set_adv_data(1,4, respData(0:4)) #Set response.
+end
+
+procedure setBatteryData()
+
+	respData(9) = $B1
+	respData(10) = battADC
+
+	call gap_set_adv_data(1,11, respData(0:11)) #Set response.
 end
 
 procedure setTempData()
-	#Data
+	#Data. We must assume the other part of this data is already set.
 	respData(4) = temperature(0:1)
 	respData(5) = temperature(1:1)
 	respData(6) = temperature(2:1)
 	respData(7) = temperature(3:1)
 	respData(8) = temperature(4:1)
-	call gap_set_adv_data(1,9, respData(0:9)) #Set response.
+	call gap_set_adv_data(1,5, respData(5:9)) #Set response.
 
 end
 
@@ -74,46 +84,44 @@ event system_boot(major ,minor ,patch ,build ,ll_version ,protocol_version ,hw )
 	call sm_set_bondable_mode(0)
 	
 	#set timer to periodically create an interrupt with interval of 1s
-	call hardware_set_soft_timer($f0000,0,0)
-	call gap_set_adv_parameters($1900,$3840, $03)
+	#call hardware_set_soft_timer($f0000,0,0) #<- Slower rate
+	call hardware_set_soft_timer($4000,0,0)
+	#call gap_set_adv_parameters($1900,$3840, $03) #<-Sets the Advetising sped to really slow
 	call gap_set_mode(gap_user_data,3)
 	#Set adv data.
 	advData(0) = 2 #length
 	advData(1) = $01 #Flags
 	advData(2) = $02 # General Discoverable
-	advData(3) = 17 #length
-	advData(4) = $07 
-	#UUID = a9 47 02 60 fa b3 11 e3 a3 ac 08 00 20 0c 9a 66
-	advData(5) = $A9
-	advData(6) = $47
-	advData(7) = $02
-	advData(8) = $60
-	advData(9) = $FA
-	advData(10) = $B3
-	advData(11) = $11
-	advData(12) = $E3
-	advData(13) = $A3
-	advData(14) = $AC
-	advData(15) = $08
-	advData(16) = $00
-	advData(17) = $20
-	advData(18) = $0C
-	advData(19) = $9A
-	advData(20) = $66
+	#UUID = 3b 66 17 a0-fb ac-11 e3-a3 ac-08 00 20 0c 9a 66 - service if I want it
+	advData(3) = 9
+	advData(4) = $08
+	#0x50 0x6f 0x6e 0x64 0x4c 0x69 0x66 0x65 - PondLife
+	advData(5) = $50
+	advData(6) = $6f
+	advData(7) = $6e
+	advData(8) = $64
+	advData(9) = $4C
+	advData(10) = $69
+	advData(11) = $66
+	advData(12) = $65
 
 	#Scan Response
 	respData(0) = 7
 	respData(1) = $16 # Service data
 	respData(2) = $9A # 16 bit UUID (Or in our case the end of he uuid)
 	respData(3) = $00
-	#Data
+	#Temp Data
 	respData(4) = $00
 	respData(5) = $00
 	respData(6) = $00
 	respData(7) = $00
+	respData(8) = $00
+	#Battery
+	respData(9) = $B1
+	respData(10) = $00
 	
-	call gap_set_adv_data(0,21,advData(0:21))
-	call gap_set_adv_data(1,9, respData(0:9)) #Set response.
+	call gap_set_adv_data(0,13,advData(0:13))
+	call gap_set_adv_data(1,11, respData(0:11)) #Set response.
 	
 
 	
@@ -136,8 +144,8 @@ event hardware_soft_timer(handle)
 	
 	call takeReadings()
 	#Request for ADC reading for internal temp sense
-	call hardware_adc_read(14,3,0)
-	
+	call hardware_adc_read(14,3,0) # Internal Temperature
+	call hardware_adc_read(15,3,0)
 	call switchLEDoff()
 end
 
@@ -169,8 +177,24 @@ event hardware_adc_result(input,value)
 		#a = (celsius / 100)						#2X.X
 		#b = (celsius / 10) + (a*-10)			#X4.X
 		#c = (celsius)      + (a*-100) + (b*-10)	#XX.8
-		call setTempData()
-		
+		#call setTempData()
+	
+	else
+		#scale value to range 0-100
+		#measurement range is 32768 = 1.24V*3 = 3.72V
+		#new battery ADC measurement is 22198=2.52V
+		#minimum battery voltage is 2.0 volts=2.0V/3.72V*32768= 17617
+		#22198 - 17617 = 4580
+		battADC =(value-18995)*100/1916
+		#clip to 100%
+		if battADC>100 then
+			battADC=100
+		end if
+		if battADC<0 then
+			battADC=0
+		end if
+
+		call setBatteryData()
 	end if 
 
 	

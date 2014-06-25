@@ -13,7 +13,20 @@ import android.util.Log;
 	private String str_pl_UUID = "3b6617a0-fbac-11e3-a3ac-0800200c9a66";
 	private String mDeviceName = "PondLife";
 	
-
+	
+	
+	public interface beaconFound
+	{
+		void onBeaconFound(byte[] data);
+	}
+	private beaconFound mBeaconFound;
+	
+	public void setBeaconFound(beaconFound bcf)
+	{
+		mBeaconFound = bcf;
+	}
+	
+	
 	public BLEcontroller(Context con, BluetoothAdapter bleAd)
 	{
 		this.mBLEAdpater = bleAd;
@@ -21,6 +34,7 @@ import android.util.Log;
 	
 	public void startScanning()
 	{
+		Log.i(MainActivity.TAG,"++++++++++++ SCAN STARTED ++++++++++++");
 		this.mLeScanCallBack = new BluetoothAdapter.LeScanCallback() 
 		{
 			@Override
@@ -28,7 +42,10 @@ import android.util.Log;
 			{
 				if(device.getName().equals(mDeviceName));
 				{
-					mBLEAdpater.stopLeScan(this);
+					Log.i(MainActivity.TAG,"++++++++++++ DEVICE FOUND ++++++++++++");
+					mBLEAdpater.stopLeScan(mLeScanCallBack);
+					//We have our device and we have stopped the scan
+					returnAdvData(scanRecord);//Send the data.
 				}
 			}
 		};
@@ -41,6 +58,20 @@ import android.util.Log;
 			Log.i("Pondlife",e.getMessage());
 		}
 
+	}
+	
+	public void stopScanning()
+	{
+		if(mBLEAdpater != null)
+		{
+			Log.i(MainActivity.TAG,"++++++++++++ SCAN STOPPED ++++++++++++");
+			mBLEAdpater.stopLeScan(mLeScanCallBack);//Stop the scan for bat reasons.
+		}
+	}
+	
+	public void returnAdvData(byte[] advData)
+	{
+		mBeaconFound.onBeaconFound(advData);	//Send the data
 	}
 
 

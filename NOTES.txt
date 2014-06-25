@@ -1,0 +1,26 @@
+POND LIFE - APP FLOW
+
+ALL IN SERVICE!
+
+something starts the app - possibly an alarm manager, possibly a another service.
+
+WAKE UP!
+		Check BT 
+		
+		if BT enabled carry on - else reset alarm (do nothing else save power)
+		
+		Do a BLE scan - as soon as our device is found disable the scan.
+		
+		Take the relevant information out of the adv data and display in notification (this may be a activity coming to the front and shout lots)
+		
+		if everything is ok then go back to sleep. (reset alarm and self terminate)
+		
+
+Manually started!
+
+	run the service and get the results and display.
+	
+	
+WORTH A LOOK ->
+
+https://developer.android.com/training/scheduling/alarms.html

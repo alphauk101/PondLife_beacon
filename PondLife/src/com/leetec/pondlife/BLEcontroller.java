@@ -55,6 +55,7 @@ import android.util.Log;
 			//UUID mplU = UUID.fromString(str_pl_UUID);
 			//UUID[] listU = {mplU};
 			mBLEAdpater.startLeScan(mLeScanCallBack);
+
 		}catch(Exception e)
 		{
 			Log.i("Pondlife",e.getMessage());

@@ -2,6 +2,7 @@ package com.leetec.pondlife;
 
 import android.app.Activity;
 import android.app.AlarmManager;
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -27,7 +28,6 @@ public class MainActivity extends Activity {
 	private LocalBroadcastManager mBroadcastReceiverManager;
 	private BroadcastReceiver mBroadcastReceiver;
 	private sPrefs myPrefs;
-	private AlarmManager mAlarmManager;
 	private TextView mEdtReportText;
 	private Switch mSwitch;
 	PendingIntent mPndInt;
@@ -40,15 +40,20 @@ public class MainActivity extends Activity {
         mEdtReportText = (TextView)findViewById(R.id.edt_report);
         setReportText("Starting");
         
+        
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        
         //Create our notification
         
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
         .setSmallIcon(R.drawable.start)
         .setContentTitle(getString(R.string.Notif_Title))
         .setContentText("Starting Pond Life");
-        
-		// Creates an explicit intent for an Activity in your app
-		Intent resultIntent = new Intent(this, MainActivity.class);
+        mBuilder.setContentIntent(pendingIntent);
+       
+		new Intent(this, MainActivity.class);
 		final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		// mId allows you to update the notification later on.
 		mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());

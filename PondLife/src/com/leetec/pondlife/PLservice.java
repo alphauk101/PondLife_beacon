@@ -10,6 +10,7 @@ import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -138,7 +139,7 @@ public class PLservice extends IntentService
 			mInfoIntent.setFlags(BEACON_OK);
 			mBroadcastReceiverManager.sendBroadcast(mInfoIntent);
 			//Weve done a local braodcast of this event now update the notification
-			sendNotification("Pond Level OK", R.drawable.good);
+			sendNotification("Pond Level OK", R.drawable.good,BeaconResult.Beacon_OK);
 			stopAndSetWakeUp();
 			break;
 		case BEACON_BAD:
@@ -148,13 +149,13 @@ public class PLservice extends IntentService
 			mInfoIntent.setFlags(BEACON_BAD);
 			mBroadcastReceiverManager.sendBroadcast(mInfoIntent);
 			//Weve done a local braodcast of this event now update the notification
-			sendNotification("Pond Level WARNING", R.drawable.bad);
+			sendNotification("Pond Level WARNING", R.drawable.bad,BeaconResult.Beacon_LevelLow);
 			stopAndSetWakeUp();
 			break;
 		case BEACON_NOT_FOUND:
 			mInfoIntent.setFlags(BEACON_NOT_FOUND);
 			mBroadcastReceiverManager.sendBroadcast(mInfoIntent);
-			sendNotification("Pond Life out of range", R.drawable.start);//Start is our amber fish.
+			sendNotification("Pond Life out of range", R.drawable.start,BeaconResult.Not_A_Beacon);//Start is our amber fish.
 			stopAndSetWakeUp();
 			break;
 		case BT_NOT_ENABLED:
@@ -174,12 +175,22 @@ public class PLservice extends IntentService
 		
 	}
 	
-	private void sendNotification(String message,int draw)
+	private void sendNotification(String message,int draw, BeaconResult bRes)
 	{
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		 NotificationCompat.Builder nmb = new NotificationCompat.Builder(getApplicationContext())
 		 .setContentTitle(getString(R.string.Notif_Title))
 		 .setContentText(message)
 		 .setSmallIcon(draw);
+		 if(bRes == BeaconResult.Beacon_LevelLow)
+		 {
+			 //We add bad sound here
+			 Uri muri = Uri.parse("android.resource://" + getApplicationContext().getPackageName() + "/" + R.raw.horn);
+			 nmb.setSound(muri);
+		 }
+		 
+		 nmb.setContentIntent(pendingIntent);
 		 mNotificationManager.notify(MainActivity.NOTIFICATION_ID, nmb.build());//updates this apps notif
 	}
 	
@@ -303,13 +314,8 @@ public class PLservice extends IntentService
 			plServiceHandler.sendEmptyMessage(START_SERVICE);
 		}else
 		{
-			//We want to stop this service indefinitely
-			if(mPndInt != null)
-			{
-				mAlarmManager.cancel(mPndInt);
-			}
+			mNotificationManager.cancel(MainActivity.NOTIFICATION_ID);
 		}
-		
 		return super.onStartCommand(intent, flags, startId);
 	}
 

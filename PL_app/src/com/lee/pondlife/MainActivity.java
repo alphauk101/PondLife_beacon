@@ -1,17 +1,15 @@
 package com.lee.pondlife;
 
+import com.leetec.pondlevel.PLservice;
+
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
-import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -24,7 +22,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.os.Build;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -38,7 +35,7 @@ public class MainActivity extends ActionBarActivity {
 	private BroadcastReceiver mBroadcastReceiver;
 	
 	private AlarmManager mAlarmManager;
-	static int SERVICE_PERIOD = 3 * (1000*60);//
+	
 	PendingIntent mPndInt;
 	
     @SuppressLint("NewApi") @Override
@@ -69,14 +66,13 @@ public class MainActivity extends ActionBarActivity {
         
       //Start Service
         Intent serviceInt = new Intent(this,PLservice.class);
-        serviceInt.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        //startService(serviceInt);
+        startService(serviceInt);
        
-        mPndInt = PendingIntent.getService(getApplicationContext(), PL_SERVICE_ID, serviceInt, PendingIntent.FLAG_CANCEL_CURRENT);
+        //mPndInt = PendingIntent.getService(getApplicationContext(), PL_SERVICE_ID, serviceInt, PendingIntent.FLAG_CANCEL_CURRENT);
         //Create our alarm manager
         //This now takes a reading every 1 min.
-        mAlarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SERVICE_PERIOD, mPndInt);
+        //mAlarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        //mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SERVICE_PERIOD, mPndInt);
 
         
         

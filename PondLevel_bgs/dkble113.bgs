@@ -19,12 +19,12 @@ procedure switchLEDoff()
 end
 
 procedure setRespData(innerState)
-	respData(0) = 7
+	respData(0) = 10
 	respData(1) = $16 # Service data
 	respData(2) = $9A # 16 bit UUID (Or in our case the end of he uuid)
 	respData(3) = innerState #Set our state
 	#Data
-	call gap_set_adv_data(1,4, respData(0:4)) #Set response.
+	call gap_set_adv_data(1,11, respData(0:11)) #Set response.
 end
 
 procedure setBatteryData()
@@ -42,7 +42,7 @@ procedure setTempData()
 	respData(6) = temperature(2:1)
 	respData(7) = temperature(3:1)
 	respData(8) = temperature(4:1)
-	call gap_set_adv_data(1,5, respData(5:9)) #Set response.
+	call gap_set_adv_data(1,5, respData(0:11)) #Set response.
 
 end
 
@@ -106,7 +106,7 @@ event system_boot(major ,minor ,patch ,build ,ll_version ,protocol_version ,hw )
 	advData(12) = $65
 
 	#Scan Response
-	respData(0) = 7
+	respData(0) = 10
 	respData(1) = $16 # Service data
 	respData(2) = $9A # 16 bit UUID (Or in our case the end of he uuid)
 	respData(3) = $00

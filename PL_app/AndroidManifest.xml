@@ -15,7 +15,10 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-        <service android:name=".PLservice" />
+        
+        <service android:name="com.leetec.pondlevel.PLservice"
+            	 android:exported="false"/>
+        
         <activity
             android:name="com.lee.pondlife.MainActivity"
             android:label="@string/app_name" >

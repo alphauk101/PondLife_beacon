@@ -5,10 +5,7 @@
     android:background="@drawable/bg"
     tools:context="${packageName}.${activityClass}" >
 
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+
 
     <Switch
         android:id="@+id/sw_enable"
@@ -20,21 +17,50 @@
         android:text="Enable Sensor" />
 
     <ImageView
-        android:id="@+id/imageView1"
+        android:id="@+id/img_fish"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:padding="20dp"
+        android:scaleType="fitCenter"
         android:src="@drawable/fishbg" />
 
     <TextView
         android:id="@+id/edt_report"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/sw_enable"
+        android:layout_below="@+id/img_fish"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="101dp"
-        android:text=""
+        android:layout_marginTop="26dp"
+        android:text="start"
         android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <RelativeLayout
+        android:id="@+id/Topper"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true" >
+
+        <ImageView
+            android:id="@+id/img_battery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:src="@drawable/battery" />
+
+        <TextView
+            android:id="@+id/txt_batlvl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/img_battery"
+            android:layout_marginBottom="9dp"
+            android:layout_marginLeft="5dp"
+            android:layout_toRightOf="@+id/img_battery"
+            android:text=""
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    </RelativeLayout>
 
 </RelativeLayout>

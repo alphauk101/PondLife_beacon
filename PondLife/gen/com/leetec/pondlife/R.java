@@ -12,17 +12,20 @@ public final class R {
     }
     public static final class drawable {
         public static final int bad=0x7f020000;
-        public static final int bg=0x7f020001;
-        public static final int fishbg=0x7f020002;
-        public static final int good=0x7f020003;
-        public static final int ic_launcher=0x7f020004;
-        public static final int start=0x7f020005;
+        public static final int battery=0x7f020001;
+        public static final int bg=0x7f020002;
+        public static final int fishbg=0x7f020003;
+        public static final int good=0x7f020004;
+        public static final int ic_launcher=0x7f020005;
+        public static final int start=0x7f020006;
     }
     public static final class id {
-        public static final int edt_report=0x7f070003;
-        public static final int imageView1=0x7f070002;
-        public static final int sw_enable=0x7f070001;
-        public static final int textView1=0x7f070000;
+        public static final int Topper=0x7f070003;
+        public static final int edt_report=0x7f070002;
+        public static final int img_battery=0x7f070004;
+        public static final int img_fish=0x7f070001;
+        public static final int sw_enable=0x7f070000;
+        public static final int txt_batlvl=0x7f070005;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;

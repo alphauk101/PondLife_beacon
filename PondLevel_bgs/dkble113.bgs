@@ -43,7 +43,6 @@ procedure setTempData()
 	respData(7) = temperature(3:1)
 	respData(8) = temperature(4:1)
 	call gap_set_adv_data(1,5, respData(0:11)) #Set response.
-
 end
 
 #####This will enable and take all the readings for this beacon
@@ -155,6 +154,9 @@ event hardware_adc_result(input,value)
 
 	if input = 14 then
 
+	
+		
+	
 		#This must be the temperature reading.
 		offset=-1600
 		# ADC value is 12 MSB
@@ -177,7 +179,7 @@ event hardware_adc_result(input,value)
 		#a = (celsius / 100)						#2X.X
 		#b = (celsius / 10) + (a*-10)			#X4.X
 		#c = (celsius)      + (a*-100) + (b*-10)	#XX.8
-		#call setTempData()
+		call setTempData()
 	
 	else
 		#scale value to range 0-100

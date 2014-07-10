@@ -1,4 +1,9 @@
 package com.leetec.pondlife;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlarmManager;
@@ -41,6 +46,8 @@ public class PLservice extends IntentService
 	private final int BEACON_NOT_FOUND = 75384;
 	private final int SERVICE_STOPPED = 578784;
 	final static int BT_NOT_ENABLED = 45389;
+	static final int BATTERY_LEVEL = 656659;
+	static final String BATTERY_LVL_REPORT = "battlvl";
 	
 	private static byte SERVICEUUID_LSB = (byte)0x16;
 	private static byte SERVICEUUID_MSB = (byte)0x9A;
@@ -83,11 +90,11 @@ public class PLservice extends IntentService
 					Log.i("PL","////////////////////////////////////////////////////// PL SERVICE STARTED PID "+ String.valueOf(id) +" ////////////////////////////////////////////");
 					//The service has been started so 
 					startScan();
-					reportActivity(START_SERVICE);
+					reportActivity(START_SERVICE,0);
 					break;
 				case BLUETOOTH_NOT_ENABLED:
 					//We need to report this then kill our self
-					reportActivity(BT_NOT_ENABLED);
+					reportActivity(BT_NOT_ENABLED,0);
 					stopAndSetWakeUp();
 					break;
 				default:
@@ -108,7 +115,7 @@ public class PLservice extends IntentService
 						BLECont.stopScanning();
 						//If we are here the beacon has not been found.
 						Log.i("PL","////////////////////////////////////////////////////// PL TIMED OUT ////////////////////////////////////////////");
-						reportActivity(BEACON_NOT_FOUND);
+						reportActivity(BEACON_NOT_FOUND,0);
 					}
 				}
 			}
@@ -125,13 +132,19 @@ public class PLservice extends IntentService
 	}
 
 	
-	private void reportActivity(int code)
+	private void reportActivity(int code, int data)
 	{
 		//We need to use notifications and a broadcaster here
 		mInfoIntent = new Intent();
 		mInfoIntent.setAction(MainActivity.IFILTER);
 		
 		switch (code) {
+		case BATTERY_LEVEL:
+			mInfoIntent.setFlags(BATTERY_LEVEL);
+			mInfoIntent.putExtra(BATTERY_LVL_REPORT, data);
+			mBroadcastReceiverManager.sendBroadcast(mInfoIntent);
+			
+			break;
 		case BEACON_OK:
 			Log.i("PL","////////////////////////////////////////////////////// PL BEACON FOUND OK////////////////////////////////////////////");
 			//Weve seen a beacon and its a good one so report it
@@ -262,10 +275,10 @@ public class PLservice extends IntentService
 					br = processBeaconData(data);
 					if(br == BeaconResult.Beacon_OK)
 					{
-						reportActivity(BEACON_OK);//This will be changed
+						reportActivity(BEACON_OK,0);//This will be changed
 					}else if(br == BeaconResult.Beacon_LevelLow)
 					{
-						reportActivity(BEACON_BAD);
+						reportActivity(BEACON_BAD,0);
 					}
 				}
 			});
@@ -275,11 +288,21 @@ public class PLservice extends IntentService
 	
 	String beaconName;
 	byte resultByte;
+	int bat = 0;
 	private BeaconResult processBeaconData(byte[] data)
 	{
 
 			//We have our beacon
 		resultByte = getLevel(data);
+		
+		//Get and report battery level
+		bat = getBattery(data);
+		if(bat > 100) bat = 100;
+		if (bat < 0) bat = 0;
+		reportActivity(BATTERY_LEVEL, bat);
+		
+		getTemp(data);
+		
 		if(resultByte != (byte)0x00)
 		{
 			if(resultByte == (byte) 0xAA)
@@ -291,6 +314,50 @@ public class PLservice extends IntentService
 			}
 		}
 		return BeaconResult.Not_A_Beacon;
+	}
+	
+	private int getBattery(byte[] data)
+	{
+		for (int i = 0; i < data.length; i++) {
+			if((data[i] == (byte) 0x0A) && (data[i+1] == SERVICEUUID_LSB) && (data[i+2] == SERVICEUUID_MSB))
+			{
+				//We know our float
+				i+=9;
+				if(data[i] == (byte)0xB1)
+				{
+					return data[i+1];
+				}//Else we have not got a temp reading
+				else
+				{
+					return 0;//Gone wrong.
+				}
+			}
+		}
+		return 0;
+	}
+	
+	private float getTemp(byte[] data)
+	{
+		for (int i = 0; i < data.length; i++) {
+			if((data[i] == (byte) 0x0A) && (data[i+1] == SERVICEUUID_LSB) && (data[i+2] == SERVICEUUID_MSB))
+			{
+				i+=4;
+				if(data[i] == (byte) 0xA1)
+				{
+					i++;
+					int tempBUF = (data[i] & 0xff); 
+					tempBUF = tempBUF | (data[i+1] << 8); 
+					tempBUF = tempBUF | (data[i+2] << 16); 
+					tempBUF = tempBUF | (data[i+3] << 24); 
+					
+
+				}else
+				{
+					return 00;
+				}
+			}
+		}
+		return 0x00;
 	}
 	
 	private byte getLevel(byte[] data)

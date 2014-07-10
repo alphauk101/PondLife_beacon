@@ -29,6 +29,7 @@ public class MainActivity extends Activity {
 	private BroadcastReceiver mBroadcastReceiver;
 	private sPrefs myPrefs;
 	private TextView mEdtReportText;
+	private TextView mTextBatt;
 	private Switch mSwitch;
 	PendingIntent mPndInt;
 	
@@ -39,6 +40,8 @@ public class MainActivity extends Activity {
         myPrefs = new sPrefs(this);
         mEdtReportText = (TextView)findViewById(R.id.edt_report);
         setReportText("Starting");
+        
+        mTextBatt = (TextView)findViewById(R.id.txt_batlvl);
         
         
         Intent notificationIntent = new Intent(this, MainActivity.class);
@@ -145,6 +148,9 @@ public class MainActivity extends Activity {
 				case PLservice.START_SERVICE:
 					setReportText("Background Service Started");
 					break;
+				case PLservice.BATTERY_LEVEL:
+						setBatteryText(intent.getIntExtra(PLservice.BATTERY_LVL_REPORT, 0));
+					break;
 				default:
 					break;
 				}
@@ -155,7 +161,11 @@ public class MainActivity extends Activity {
 		mBroadcastReceiverManager.registerReceiver(mBroadcastReceiver, IFil);
     }
 
-    
+    private void setBatteryText(int level)
+    {
+    	String mTmpBatt = String.valueOf(level) + "%";
+    	mTextBatt.setText(mTmpBatt);
+    }
     
     @Override
 	protected void onStop() {

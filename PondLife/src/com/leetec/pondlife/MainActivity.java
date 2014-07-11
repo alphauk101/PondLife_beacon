@@ -30,6 +30,7 @@ public class MainActivity extends Activity {
 	private sPrefs myPrefs;
 	private TextView mEdtReportText;
 	private TextView mTextBatt;
+	private TextView mTextTemp;
 	private Switch mSwitch;
 	PendingIntent mPndInt;
 	
@@ -42,7 +43,7 @@ public class MainActivity extends Activity {
         setReportText("Starting");
         
         mTextBatt = (TextView)findViewById(R.id.txt_batlvl);
-        
+        mTextTemp = (TextView)findViewById(R.id.edt_temp);
         
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
@@ -58,6 +59,7 @@ public class MainActivity extends Activity {
        
 		new Intent(this, MainActivity.class);
 		final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		
 		// mId allows you to update the notification later on.
 		mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
 		
@@ -151,6 +153,9 @@ public class MainActivity extends Activity {
 				case PLservice.BATTERY_LEVEL:
 						setBatteryText(intent.getIntExtra(PLservice.BATTERY_LVL_REPORT, 0));
 					break;
+				case PLservice.TEMP_LEVEL:
+						setTempText(intent.getFloatExtra(PLservice.TEMP_LEVEL_REPORT, (float) 0.0));
+					break;
 				default:
 					break;
 				}
@@ -166,6 +171,12 @@ public class MainActivity extends Activity {
     	String mTmpBatt = String.valueOf(level) + "%";
     	mTextBatt.setText(mTmpBatt);
     }
+    
+    private void setTempText(float temp)
+    {
+    	mTextTemp.setText(String.valueOf(temp) + (char)0xB0 + "C");
+    }
+    
     
     @Override
 	protected void onStop() {

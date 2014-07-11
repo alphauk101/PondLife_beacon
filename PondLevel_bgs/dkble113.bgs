@@ -153,12 +153,9 @@ end
 event hardware_adc_result(input,value)
 
 	if input = 14 then
-
-	
-		
 	
 		#This must be the temperature reading.
-		offset=-1600
+		offset=-1490
 		# ADC value is 12 MSB
 		celsius = value / 16
 		# Calculate temperature

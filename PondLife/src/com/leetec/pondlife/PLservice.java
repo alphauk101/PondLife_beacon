@@ -48,6 +48,8 @@ public class PLservice extends IntentService
 	final static int BT_NOT_ENABLED = 45389;
 	static final int BATTERY_LEVEL = 656659;
 	static final String BATTERY_LVL_REPORT = "battlvl";
+	static final int TEMP_LEVEL = 753814;
+	static final String TEMP_LEVEL_REPORT = "templvl";
 	
 	private static byte SERVICEUUID_LSB = (byte)0x16;
 	private static byte SERVICEUUID_MSB = (byte)0x9A;
@@ -90,11 +92,11 @@ public class PLservice extends IntentService
 					Log.i("PL","////////////////////////////////////////////////////// PL SERVICE STARTED PID "+ String.valueOf(id) +" ////////////////////////////////////////////");
 					//The service has been started so 
 					startScan();
-					reportActivity(START_SERVICE,0);
+					reportActivity(START_SERVICE,0,0);
 					break;
 				case BLUETOOTH_NOT_ENABLED:
 					//We need to report this then kill our self
-					reportActivity(BT_NOT_ENABLED,0);
+					reportActivity(BT_NOT_ENABLED,0,0);
 					stopAndSetWakeUp();
 					break;
 				default:
@@ -115,7 +117,7 @@ public class PLservice extends IntentService
 						BLECont.stopScanning();
 						//If we are here the beacon has not been found.
 						Log.i("PL","////////////////////////////////////////////////////// PL TIMED OUT ////////////////////////////////////////////");
-						reportActivity(BEACON_NOT_FOUND,0);
+						reportActivity(BEACON_NOT_FOUND,0,0);
 					}
 				}
 			}
@@ -132,13 +134,18 @@ public class PLservice extends IntentService
 	}
 
 	
-	private void reportActivity(int code, int data)
+	private void reportActivity(int code, int data, float flData)
 	{
 		//We need to use notifications and a broadcaster here
 		mInfoIntent = new Intent();
 		mInfoIntent.setAction(MainActivity.IFILTER);
 		
 		switch (code) {
+		case TEMP_LEVEL:
+				mInfoIntent.setFlags(TEMP_LEVEL);
+				mInfoIntent.putExtra(TEMP_LEVEL_REPORT, flData);
+				mBroadcastReceiverManager.sendBroadcast(mInfoIntent);
+			break;		
 		case BATTERY_LEVEL:
 			mInfoIntent.setFlags(BATTERY_LEVEL);
 			mInfoIntent.putExtra(BATTERY_LVL_REPORT, data);
@@ -275,10 +282,10 @@ public class PLservice extends IntentService
 					br = processBeaconData(data);
 					if(br == BeaconResult.Beacon_OK)
 					{
-						reportActivity(BEACON_OK,0);//This will be changed
+						reportActivity(BEACON_OK,0,0);//This will be changed
 					}else if(br == BeaconResult.Beacon_LevelLow)
 					{
-						reportActivity(BEACON_BAD,0);
+						reportActivity(BEACON_BAD,0,0);
 					}
 				}
 			});
@@ -299,7 +306,7 @@ public class PLservice extends IntentService
 		bat = getBattery(data);
 		if(bat > 100) bat = 100;
 		if (bat < 0) bat = 0;
-		reportActivity(BATTERY_LEVEL, bat);
+		reportActivity(BATTERY_LEVEL, bat,0);
 		
 		getTemp(data);
 		
@@ -345,12 +352,14 @@ public class PLservice extends IntentService
 				if(data[i] == (byte) 0xA1)
 				{
 					i++;
-					int tempBUF = (data[i] & 0xff); 
-					tempBUF = tempBUF | (data[i+1] << 8); 
-					tempBUF = tempBUF | (data[i+2] << 16); 
-					tempBUF = tempBUF | (data[i+3] << 24); 
-					
-
+					int tempBUF = data[i+2];
+					tempBUF = tempBUF << 8;
+					tempBUF |= (data[i+1]); 
+					tempBUF = tempBUF << 8;
+					tempBUF |= ((data[i]) & 0xFF); 
+					float flTemp = (float) tempBUF;
+					flTemp = flTemp/10;
+					reportActivity(TEMP_LEVEL, 0, flTemp); //Weve got the temp so report it.
 				}else
 				{
 					return 00;

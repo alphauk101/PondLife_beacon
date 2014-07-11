@@ -58,7 +58,24 @@
             android:layout_marginBottom="9dp"
             android:layout_marginLeft="5dp"
             android:layout_toRightOf="@+id/img_battery"
-            android:text=""
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <TextView
+            android:id="@+id/txtAir"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginRight="10dp"
+            android:text="Air Temp"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+
+        <TextView
+            android:id="@+id/edt_temp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/txtAir"
+            android:layout_below="@+id/txtAir"
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
     </RelativeLayout>

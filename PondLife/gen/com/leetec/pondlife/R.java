@@ -17,7 +17,11 @@ public final class R {
         public static final int fishbg=0x7f020003;
         public static final int good=0x7f020004;
         public static final int ic_launcher=0x7f020005;
-        public static final int start=0x7f020006;
+        public static final int sigbad=0x7f020006;
+        public static final int siggood=0x7f020007;
+        public static final int signo=0x7f020008;
+        public static final int sigok=0x7f020009;
+        public static final int start=0x7f02000a;
     }
     public static final class id {
         public static final int Topper=0x7f070003;
@@ -25,6 +29,7 @@ public final class R {
         public static final int edt_temp=0x7f070007;
         public static final int img_battery=0x7f070004;
         public static final int img_fish=0x7f070001;
+        public static final int img_signal=0x7f070008;
         public static final int sw_enable=0x7f070000;
         public static final int txtAir=0x7f070006;
         public static final int txt_batlvl=0x7f070005;

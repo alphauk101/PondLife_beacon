@@ -12,9 +12,11 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Switch;
@@ -33,6 +35,8 @@ public class MainActivity extends Activity {
 	private TextView mTextTemp;
 	private Switch mSwitch;
 	PendingIntent mPndInt;
+	private NotificationManager mNotificationManager = null;
+	private ImageView mSignalImg;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +46,7 @@ public class MainActivity extends Activity {
         mEdtReportText = (TextView)findViewById(R.id.edt_report);
         setReportText("Starting");
         
+        mSignalImg = (ImageView)findViewById(R.id.img_signal);
         mTextBatt = (TextView)findViewById(R.id.txt_batlvl);
         mTextTemp = (TextView)findViewById(R.id.edt_temp);
         
@@ -58,7 +63,7 @@ public class MainActivity extends Activity {
         mBuilder.setContentIntent(pendingIntent);
        
 		new Intent(this, MainActivity.class);
-		final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		
 		// mId allows you to update the notification later on.
 		mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
@@ -156,6 +161,9 @@ public class MainActivity extends Activity {
 				case PLservice.TEMP_LEVEL:
 						setTempText(intent.getFloatExtra(PLservice.TEMP_LEVEL_REPORT, (float) 0.0));
 					break;
+				case PLservice.SIGNAL_LEVEL:
+						setSignalStrength(intent.getIntExtra(PLservice.SIGNAL_LEVEL_REPORT, 0));
+					break;
 				default:
 					break;
 				}
@@ -166,6 +174,29 @@ public class MainActivity extends Activity {
 		mBroadcastReceiverManager.registerReceiver(mBroadcastReceiver, IFil);
     }
 
+    
+    private void setSignalStrength(int rssi)
+    {
+    	if(rssi != 0)
+    	{
+    		Log.i("PONDLIFE", ">>>>>>>>>> RSSI: " + rssi);
+    		//Should be something sensible
+    		if(rssi > -50)
+    		{
+    			mSignalImg.setImageResource(R.drawable.siggood);
+    		}else if (rssi > -90)
+    		{
+    			mSignalImg.setImageResource(R.drawable.sigok);
+    		}else
+    		{
+    			mSignalImg.setImageResource(R.drawable.sigbad);
+    		}
+    	}else
+    	{
+    		mSignalImg.setImageResource(R.drawable.signo);
+    	}
+    }
+    
     private void setBatteryText(int level)
     {
     	String mTmpBatt = String.valueOf(level) + "%";
@@ -182,6 +213,11 @@ public class MainActivity extends Activity {
 	protected void onStop() {
 		
     	//Make sure we do this here.
+    	//We also want to remove the notification
+    	if (mNotificationManager != null)
+    	{
+    		mNotificationManager.cancel(NOTIFICATION_ID);//So it isnt there after we go.
+    	}
     	mBroadcastReceiverManager.unregisterReceiver(mBroadcastReceiver);
     	super.onStop();
 	}

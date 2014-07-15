@@ -46,6 +46,7 @@ import android.util.Log;
 					Log.i(MainActivity.TAG,"++++++++++++ DEVICE FOUND ++++++++++++");
 					mBLEAdpater.stopLeScan(mLeScanCallBack);
 					//We have our device and we have stopped the scan
+					scanRecord[scanRecord.length - 1] = (byte) rssi;//We can use the last byte for our rssi.
 					returnAdvData(scanRecord);//Send the data.
 				}
 				Log.i(MainActivity.TAG,"++++++++++++ DEVICE ++++++++++++");

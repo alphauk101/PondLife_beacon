@@ -45,9 +45,11 @@ public class PLservice extends IntentService
 	final static int BEACON_BAD = 654651;
 	private final int BEACON_NOT_FOUND = 75384;
 	private final int SERVICE_STOPPED = 578784;
+	final static int SIGNAL_LEVEL = 75358; 
 	final static int BT_NOT_ENABLED = 45389;
 	static final int BATTERY_LEVEL = 656659;
 	static final String BATTERY_LVL_REPORT = "battlvl";
+	static final String SIGNAL_LEVEL_REPORT = "signallvl";
 	static final int TEMP_LEVEL = 753814;
 	static final String TEMP_LEVEL_REPORT = "templvl";
 	
@@ -141,6 +143,11 @@ public class PLservice extends IntentService
 		mInfoIntent.setAction(MainActivity.IFILTER);
 		
 		switch (code) {
+		case SIGNAL_LEVEL:
+				mInfoIntent.setFlags(SIGNAL_LEVEL);
+				mInfoIntent.putExtra(SIGNAL_LEVEL_REPORT, data);
+				mBroadcastReceiverManager.sendBroadcast(mInfoIntent);
+			break;
 		case TEMP_LEVEL:
 				mInfoIntent.setFlags(TEMP_LEVEL);
 				mInfoIntent.putExtra(TEMP_LEVEL_REPORT, flData);
@@ -307,6 +314,9 @@ public class PLservice extends IntentService
 		if(bat > 100) bat = 100;
 		if (bat < 0) bat = 0;
 		reportActivity(BATTERY_LEVEL, bat,0);
+		
+		int rssi = data[data.length-1];
+		reportActivity(SIGNAL_LEVEL, rssi, 0);
 		
 		getTemp(data);
 		

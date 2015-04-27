@@ -5,7 +5,7 @@
 	file path:	C:\Users\Lee_Laptop\Documents\GitHub\PondLife_beacon\ATtiny\MCUdriver\MCUdriver
 	file base:	MCUdriver
 	file ext:	c
-	author:		Lee Williams
+	author:	Lee Williams
 	
 	purpose:	To drive the water detection, using capicitance sensing.
 *********************************************************************/

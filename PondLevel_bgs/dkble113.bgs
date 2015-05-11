@@ -4,27 +4,17 @@ dim pinState
 dim state
 dim counter
 dim advData(13)
-dim respData(11)
+dim respData(12)
 dim celsius
 dim temperature(5)
 dim offset
 dim battADC
 
 
-procedure switchLEDon()
-	call hardware_io_port_write(1, $01,0)(resCode)
-end
-procedure switchLEDoff()
-	call hardware_io_port_write(1, $01,1)(resCode)
-end
-
 procedure setRespData(innerState)
-	respData(0) = 10
-	respData(1) = $16 # Service data
-	respData(2) = $9A # 16 bit UUID (Or in our case the end of he uuid)
-	respData(3) = innerState #Set our state
+	respData(11) = innerState
 	#Data
-	call gap_set_adv_data(1,11, respData(0:11)) #Set response.
+	call gap_set_adv_data(1,12, respData(0:12)) #Set response.
 end
 
 procedure setBatteryData()
@@ -32,7 +22,7 @@ procedure setBatteryData()
 	respData(9) = $B1
 	respData(10) = battADC
 
-	call gap_set_adv_data(1,11, respData(0:11)) #Set response.
+	#call gap_set_adv_data(1,12, respData(0:12)) #Set response.
 end
 
 procedure setTempData()
@@ -42,21 +32,15 @@ procedure setTempData()
 	respData(6) = temperature(2:1)
 	respData(7) = temperature(3:1)
 	respData(8) = temperature(4:1)
-	call gap_set_adv_data(1,5, respData(0:11)) #Set response.
+	#call gap_set_adv_data(1,12, respData(0:12)) #Set response.
 end
+
 
 #####This will enable and take all the readings for this beacon
 procedure takeReadings()
-	#call switchLEDon()
-	#First turn the transistor on
-	call hardware_io_port_write(1,$80,1)(resCode)
-	
-	while counter > 0
-		counter = counter - 1
-	end while
-	counter = 5
+
 	#now take a reading of the float switch.
-	call hardware_io_port_read(1,$40)(resCode,port,state)
+	call hardware_io_port_read(0,$02)(resCode,port,state)
 	#check the result code first
 	if resCode = 0 then
 		if state > 0 then
@@ -65,15 +49,20 @@ procedure takeReadings()
 			call setRespData($FF)#Failed
 		end if
 	else
-		call setRespData($FF) #This cant be a valid reading.
+		call setRespData($11) #This cant be a valid reading.
 		
 	end if
-	
-	#Turn transistor off
-	call hardware_io_port_write(1,$80,0)(resCode)
-	#call switchLEDoff()
+
 end
 
+procedure led(sts)
+	if sts = 1 then
+		call hardware_io_port_write(0, $01, $00)
+	else
+		call hardware_io_port_write(0, $01, $01)
+	end if
+	
+end
 
 #init gap mod, bonding and start freerunning times on system boot
 event system_boot(major ,minor ,patch ,build ,ll_version ,protocol_version ,hw )
@@ -81,11 +70,11 @@ event system_boot(major ,minor ,patch ,build ,ll_version ,protocol_version ,hw )
 
 	#Allow pairing
 	call sm_set_bondable_mode(0)
-	
+	call gap_set_adv_parameters($3E80,$3E80, $07) #<-Sets the Advertising sped to really slow
 	#set timer to periodically create an interrupt with interval of 1s
 	#call hardware_set_soft_timer($f0000,0,0) #<- Slower rate
-	call hardware_set_soft_timer($4000,0,0)
-	#call gap_set_adv_parameters($1900,$3840, $03) #<-Sets the Advetising sped to really slow
+	call hardware_set_soft_timer($50000,0,0)
+	
 	call gap_set_mode(gap_user_data,3)
 	#Set adv data.
 	advData(0) = 2 #length
@@ -103,12 +92,13 @@ event system_boot(major ,minor ,patch ,build ,ll_version ,protocol_version ,hw )
 	advData(10) = $69
 	advData(11) = $66
 	advData(12) = $65
-
+	call gap_set_adv_data(0,13,advData(0:13))
+	call led(1)
 	#Scan Response
-	respData(0) = 10
+	respData(0) = 11
 	respData(1) = $16 # Service data
 	respData(2) = $9A # 16 bit UUID (Or in our case the end of he uuid)
-	respData(3) = $00
+	respData(3) = $66
 	#Temp Data
 	respData(4) = $00
 	respData(5) = $00
@@ -118,11 +108,10 @@ event system_boot(major ,minor ,patch ,build ,ll_version ,protocol_version ,hw )
 	#Battery
 	respData(9) = $B1
 	respData(10) = $00
+	#Switch State
+	respData(11) = $16
 	
-	call gap_set_adv_data(0,13,advData(0:13))
-	call gap_set_adv_data(1,11, respData(0:11)) #Set response.
-	
-
+	call gap_set_adv_data(1,12, respData(0:12)) #Set response.
 	
 	##########################Hardware configuration######################
 	#1 p7 = trans
@@ -130,28 +119,34 @@ event system_boot(major ,minor ,patch ,build ,ll_version ,protocol_version ,hw )
 	#1 p0 = LED
 	# 7654 3210
 	# 1000 0001
-	call hardware_io_port_config_direction(1,$81)
+	call hardware_io_port_config_direction(0,$01)
+	
+	#Turn off port 2
+	call hardware_io_port_config_direction(2,$FF)
+	call hardware_io_port_write(2, $FF, $00)
 
 	#Should config sets pin 1 to out and the rest to in.
 	#1 sec min - 10 sec - 2 channels
-	
+	call led(0) #Show bootup complete
 end
 
 #timer expired
 event hardware_soft_timer(handle)
-	call switchLEDon()
-	
+	#call switchLEDon()
+	call led(1)#Switch the led on
 	call takeReadings()
 	#Request for ADC reading for internal temp sense
 	call hardware_adc_read(14,3,0) # Internal Temperature
 	call hardware_adc_read(15,3,0)
-	call switchLEDoff()
+	#call switchLEDoff()
 end
 
 
 #ADC measurement ready
 event hardware_adc_result(input,value)
 
+	call led(0)#show the reading is complete
+	
 	if input = 14 then
 	
 		#This must be the temperature reading.

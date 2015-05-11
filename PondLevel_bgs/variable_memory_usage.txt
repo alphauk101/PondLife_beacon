@@ -1,4 +1,4 @@
-61
+66
 0:0	GAP_AD_FLAG_BREDR_NOT_SUPPORTED
 0:0	GAP_AD_FLAG_GENERAL_DISCOVERABLE
 0:0	GAP_AD_FLAG_LIMITED_DISCOVERABLE
@@ -84,8 +84,9 @@
 12:4	state
 16:4	counter
 20:13	advData
-33:11	respData
-44:4	celsius
-48:5	temperature
-53:4	offset
-57:4	battADC
+33:12	respData
+45:4	celsius
+49:5	temperature
+54:4	offset
+58:4	battADC
+62:4	currentMode

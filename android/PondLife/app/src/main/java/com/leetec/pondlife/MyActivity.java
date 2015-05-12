@@ -23,6 +23,7 @@ public class MyActivity extends Activity {
     private static TextView txtTemperature;
     private static TextView txtStatus;
     private static TextView txtLastDate;
+    private static boolean CURRENT_STATE = false;
 
     /***
      * This is our service broadcast catcher
@@ -34,35 +35,52 @@ public class MyActivity extends Activity {
     public static final String bluetoothNotEnabled = "com.leetec.BluetoothOff";
     public static final String getScanStatus = "com.leetec.getScanStatus";
     public static final String statusOfScan = "com.leetec.statusScan";
+    public static final String checkBTstate = "com.leetec.BTStatus";
+    public static final String BTstateResult = "com.leetec.BTstatusReport";
+
     public static final String statusScanExtra = "stsScan";
+    public static final String BTStatusExtra = "btScan";
 
     private static final String BT_notEnabled = "Bluetooth off";
     private static final String ReadyToStart = "Touch to begin";
     private static final String CurrentlyScanning = "Monitoring...";
     private static final String NotCurrentlyScanning = "Waiting..";
 
-    private static final BroadcastReceiver mBroadcaster = new BroadcastReceiver() {
+    private BroadcastReceiver mBroadcaster = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.i(TAG,"Broadcaster got message");
+
             String Action = intent.getAction();
-            if(Action.equals(bluetoothNotEnabled))
+            Log.i(TAG,"Activity Broadcaster got message: " + Action);
+            if(Action.equals(BTstateResult))
             {
-                txtEnable.setText(BT_notEnabled);
+                if(! intent.getBooleanExtra(BTStatusExtra,false))
+                {
+                    Log.i(TAG,"BT not enabled");
+                    txtEnable.setText(BT_notEnabled);
+                }
             }else if(Action.equals(BluetoothAdapter.ACTION_STATE_CHANGED))
             {
+                Log.i(TAG,"Status changed");
                 int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,BluetoothAdapter.ERROR);
                 if(state == BluetoothAdapter.STATE_ON)
                 {
-                    txtEnable.setText(ReadyToStart);
+                    //The bluetooth adapter should be on so lets make a request to check it.
+                    Log.i(TAG, "BT not enabled");
+                    txtEnable.setText("Bluetooth switched on");
                 }
+
             }else if(Action.equals(statusOfScan))
             {
+                Log.i(TAG,"Scan Status changed");
                 if(intent.getBooleanExtra(statusScanExtra,false))
                 {
+                    CURRENT_STATE = true; //We are scanning
                     txtEnable.setText(CurrentlyScanning);
                 }else{
+                    CURRENT_STATE = false;//We are not scanning
                     txtEnable.setText(NotCurrentlyScanning);
+
                 }
             }
 
@@ -74,6 +92,9 @@ public class MyActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my);
 
+
+
+
         txtEnable = (TextView)findViewById(R.id.txt_Waiting);
         txtTemperature = (TextView)findViewById(R.id.txt_temperature);
         txtStatus = (TextView)findViewById(R.id.txt_status);
@@ -83,19 +104,30 @@ public class MyActivity extends Activity {
         mIntents.addAction(startService);
         mIntents.addAction(statusOfScan);
         mIntents.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+        mIntents.addAction(BTstateResult);
         registerReceiver(mBroadcaster, mIntents);
 
 
         startService();//Once weve initialised the app we need to start the service as it does everything
 
+        Intent mGetStatus = new Intent();
+        mGetStatus.setAction(getScanStatus);
+        sendBroadcast(mGetStatus);
+
         LinearLayout mGoTap = (LinearLayout)findViewById(R.id.lyo_enabled);
         mGoTap.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent mScanMode = new Intent();
                 //We need to start or stop the scan depending on the current state
-                Intent mStartScan = new Intent();
-                mStartScan.setAction(BR_StartScan);
-                sendBroadcast(mStartScan);
+                if(! CURRENT_STATE) {//We are not scanning
+                    mScanMode.setAction(BR_StartScan);
+                }else{
+                    //We are scanning so best to stop the scan
+                    mScanMode.setAction(BR_StopScan);
+                }
+
+                sendBroadcast(mScanMode);
             }
         });
 

@@ -59,7 +59,7 @@ import android.util.Log;
 
 		}catch(Exception e)
 		{
-			Log.i("Pondlife",e.getMessage());
+			Log.i(MyActivity.TAG,e.getMessage());
 		}
 
 	}

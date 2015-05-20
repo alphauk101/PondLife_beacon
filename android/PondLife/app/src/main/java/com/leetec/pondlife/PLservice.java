@@ -2,6 +2,7 @@ package com.leetec.pondlife;
 
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -55,6 +56,9 @@ public class PLservice extends Service
 
             if(action == MyActivity.BR_StartScan)
             {
+
+                updateNotification("Pondlife","Silent running...");//Only update this if the user starts the scan
+
                 USER_REQUESTED_MODE=true;
                 if(startScan())
                 {
@@ -67,6 +71,7 @@ public class PLservice extends Service
 
             }else if(action == MyActivity.BR_StopScan)
             {
+                updateNotification("Pondlife","Scan stopped.");//Only update this if the user starts the scan
                 USER_REQUESTED_MODE = false;
                 stopScan();
 
@@ -136,6 +141,7 @@ public class PLservice extends Service
         super.onCreate();
     }
 
+
     /***
      * Starts the BLE scann for the beacon
      * @return if false is returned assume something went wrong.
@@ -144,6 +150,8 @@ public class PLservice extends Service
     {
         if( (mBluetoothAdapter != null) && (mBluetoothAdapter.isEnabled()) )
         {
+            updateNotification("PondLife","Silent scanning.");
+
             if(mCurrentState != ScanState.RUNNING) {
                 if(mBLEController == null) {
                     mBLEController = new BLEcontroller(getApplication(), mBluetoothAdapter);
@@ -181,7 +189,7 @@ public class PLservice extends Service
         }else{
             Log.i(MyActivity.TAG,"!!!!!!!!!!!!!!! Unable to use BT adapter so a scan has not been started!!!!!!!!!!!!!!!!!!!");
             checkBluetoothAdapter();
-
+            updateNotification("PondLife","Bluetooth not enabled not scanning!");
             mCurrentState = ScanState.NOT_RUNNING;//Make sure we know were not running
 
             //We need to make sure we set up a stop timer but now it can wait extra time
@@ -276,7 +284,30 @@ public class PLservice extends Service
 
     void removeNotification()
     {
-        mNotificationManager.cancelAll();
+        if(mNotificationManager != null) {
+            mNotificationManager.cancelAll();
+        }
+    }
+
+    void updateNotification(String title, String msg)
+    {
+        if(mNotificationManager != null) {
+
+            Intent resultIntent = new Intent(this, MyActivity.class);
+            PendingIntent resultPendingIntent =
+                    PendingIntent.getActivity(this,0,resultIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT
+                    );
+
+            Notification notification = new Notification.Builder(this)
+                    .setContentTitle(title)
+                    .setContentText(msg).setSmallIcon(R.drawable.start)
+                    .setContentIntent(resultPendingIntent)
+                    .build();
+            // mId allows you to update the notification later on.
+            mNotificationManager.notify(NOTIFICATION_ID, notification);
+
+        }
     }
 
     @Override
@@ -295,6 +326,7 @@ public class PLservice extends Service
     {
         mBeaconCount++;
         //If weve found a beacon then the scan has stopped
+        stopScan();
         mCurrentState=ScanState.NOT_RUNNING;
 
     }

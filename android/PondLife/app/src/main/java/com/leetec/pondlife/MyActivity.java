@@ -44,7 +44,7 @@ public class MyActivity extends Activity {
     private static final String BT_notEnabled = "Bluetooth off";
     private static final String ReadyToStart = "Touch to begin";
     private static final String CurrentlyScanning = "Monitoring...";
-    private static final String NotCurrentlyScanning = "Waiting, Touch to start..";
+    private static final String NotCurrentlyScanning = "Waiting.";
 
     private BroadcastReceiver mBroadcaster = new BroadcastReceiver() {
         @Override

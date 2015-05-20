@@ -65,9 +65,6 @@ public class PLservice extends Service
                     checkBluetoothAdapter();//The fact the scan has failed to start is probably due to the bt adapter not working properly.
                 }
 
-
-
-
             }else if(action == MyActivity.BR_StopScan)
             {
                 USER_REQUESTED_MODE = false;
@@ -81,7 +78,7 @@ public class PLservice extends Service
                 Intent Result = new Intent();
                 Result.setAction(MyActivity.statusOfScan);
                 Boolean resultFlag;
-                if(mCurrentState == ScanState.RUNNING)
+                if(USER_REQUESTED_MODE)
                 {
                     resultFlag = true;
                 }else{
@@ -94,6 +91,7 @@ public class PLservice extends Service
                 //The activity has requested we check the state of the bt
                 checkBluetoothAdapter();
             }
+
         }
     };
 
@@ -128,15 +126,12 @@ public class PLservice extends Service
 
         Notification notification = new Notification.Builder(this)
                 .setContentTitle("Pond Life")
-                .setContentText("Service Started").setSmallIcon(R.drawable.ic_launcher)
+                .setContentText("Service Started").setSmallIcon(R.drawable.start)
                 .build();
 
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
         // mId allows you to update the notification later on.
         mNotificationManager.notify(NOTIFICATION_ID, notification);
-
-
 
         super.onCreate();
     }
@@ -247,10 +242,10 @@ public class PLservice extends Service
             mBLEController.stopScanning();
             mCurrentState = ScanState.NOT_RUNNING;
         }
-        if(USER_REQUESTED_MODE)
+        if(USER_REQUESTED_MODE)//We are still requested by the activity to carry on scanning
         {
 
-            Log.i(MyActivity.TAG,"Restting for next scan.");
+            Log.i(MyActivity.TAG,"Resetting for next scan.");
 
             //We have still got to carry on running because the user has not stopped us
 
@@ -274,8 +269,14 @@ public class PLservice extends Service
                 }
             },timer);
         }else{
+            removeNotification();
             Log.i(MyActivity.TAG,"User has requested a stop scan.");
         }
+    }
+
+    void removeNotification()
+    {
+        mNotificationManager.cancelAll();
     }
 
     @Override

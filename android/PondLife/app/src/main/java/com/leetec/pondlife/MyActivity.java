@@ -44,7 +44,7 @@ public class MyActivity extends Activity {
     private static final String BT_notEnabled = "Bluetooth off";
     private static final String ReadyToStart = "Touch to begin";
     private static final String CurrentlyScanning = "Monitoring...";
-    private static final String NotCurrentlyScanning = "Waiting..";
+    private static final String NotCurrentlyScanning = "Waiting, Touch to start..";
 
     private BroadcastReceiver mBroadcaster = new BroadcastReceiver() {
         @Override
@@ -82,6 +82,10 @@ public class MyActivity extends Activity {
                     txtEnable.setText(NotCurrentlyScanning);
 
                 }
+            }else if (Action.equals(startService))
+            {
+                //Our service has just been created
+                txtEnable.setText(NotCurrentlyScanning);
             }
 
         }
@@ -91,9 +95,6 @@ public class MyActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my);
-
-
-
 
         txtEnable = (TextView)findViewById(R.id.txt_Waiting);
         txtTemperature = (TextView)findViewById(R.id.txt_temperature);

@@ -95,7 +95,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="Last Date"
+            android:text="Last Seen"
             android:textSize="35dp"
             android:paddingTop="40dp"
             android:paddingBottom="40dp"

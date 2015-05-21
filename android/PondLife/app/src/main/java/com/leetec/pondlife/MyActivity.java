@@ -14,6 +14,8 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.util.Calendar;
+
 
 public class MyActivity extends Activity {
 
@@ -37,9 +39,12 @@ public class MyActivity extends Activity {
     public static final String statusOfScan = "com.leetec.statusScan";
     public static final String checkBTstate = "com.leetec.BTStatus";
     public static final String BTstateResult = "com.leetec.BTstatusReport";
+    public static final String BeaconDetails = "com.leetec.BeaconResults";
 
     public static final String statusScanExtra = "stsScan";
     public static final String BTStatusExtra = "btScan";
+    public static final String BeaconResultsExtraTemperature = "beaconTemp";
+    public static final String BeaconResultsExtraStatus = "beaconStatus";
 
     private static final String BT_notEnabled = "Bluetooth off";
     private static final String ReadyToStart = "Touch to begin";
@@ -86,6 +91,24 @@ public class MyActivity extends Activity {
             {
                 //Our service has just been created
                 txtEnable.setText(NotCurrentlyScanning);
+            }else if (Action.equals(BeaconDetails))
+            {
+                String temperatue = String.valueOf(intent.getFloatExtra(BeaconResultsExtraTemperature,(float)0.0));
+                txtTemperature.setText(temperatue+"°C");
+
+                if(intent.getByteExtra(BeaconResultsExtraStatus,(byte)0x00) == (byte)0xAA)
+                {
+                    txtStatus.setText("Level OK");
+                }else{
+                    txtStatus.setText("Level LOW!!");
+                }
+
+                Calendar c = Calendar.getInstance();
+                String date;
+                date = c.get(Calendar.DAY_OF_MONTH)+"/"+c.get(Calendar.MONTH)+"/"+c.get(Calendar.YEAR)
+                        +" "+c.get(Calendar.HOUR_OF_DAY)+":"+c.get(Calendar.MINUTE);
+                txtLastDate.setText(date);
+
             }
 
         }
@@ -101,6 +124,7 @@ public class MyActivity extends Activity {
         txtStatus = (TextView)findViewById(R.id.txt_status);
         txtLastDate = (TextView)findViewById(R.id.txt_lasthit);
 
+        mIntents.addAction(BeaconDetails);
         mIntents.addAction(bluetoothNotEnabled);
         mIntents.addAction(startService);
         mIntents.addAction(statusOfScan);

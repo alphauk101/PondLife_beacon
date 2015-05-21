@@ -25,6 +25,8 @@ public class PLservice extends Service
     private static boolean USER_REQUESTED_MODE = false; //This represents what the user has requested
     //we need to keep track if they've stopped the scan then we need to make sure we do
 
+    private byte GOOD_BYTE = (byte)0xAA;
+
     private static int LONG_WAIT = ((1000*60)*2);
     //private static int SHORT_WAIT = ((1000*60)*1);
     private static int SHORT_WAIT = 10000;
@@ -57,7 +59,7 @@ public class PLservice extends Service
             if(action == MyActivity.BR_StartScan)
             {
 
-                updateNotification("Pondlife","Silent running...");//Only update this if the user starts the scan
+                updateNotification("Pondlife","Silent running...",R.drawable.start);//Only update this if the user starts the scan
 
                 USER_REQUESTED_MODE=true;
                 if(startScan())
@@ -71,7 +73,7 @@ public class PLservice extends Service
 
             }else if(action == MyActivity.BR_StopScan)
             {
-                updateNotification("Pondlife","Scan stopped.");//Only update this if the user starts the scan
+                updateNotification("Pondlife","Scan stopped.",R.drawable.start);//Only update this if the user starts the scan
                 USER_REQUESTED_MODE = false;
                 stopScan();
 
@@ -150,7 +152,7 @@ public class PLservice extends Service
     {
         if( (mBluetoothAdapter != null) && (mBluetoothAdapter.isEnabled()) )
         {
-            updateNotification("PondLife","Silent scanning.");
+            updateNotification("PondLife","Silent scanning.",R.drawable.start);
 
             if(mCurrentState != ScanState.RUNNING) {
                 if(mBLEController == null) {
@@ -189,7 +191,7 @@ public class PLservice extends Service
         }else{
             Log.i(MyActivity.TAG,"!!!!!!!!!!!!!!! Unable to use BT adapter so a scan has not been started!!!!!!!!!!!!!!!!!!!");
             checkBluetoothAdapter();
-            updateNotification("PondLife","Bluetooth not enabled not scanning!");
+            updateNotification("PondLife","Bluetooth not enabled not scanning!",R.drawable.start);
             mCurrentState = ScanState.NOT_RUNNING;//Make sure we know were not running
 
             //We need to make sure we set up a stop timer but now it can wait extra time
@@ -289,7 +291,7 @@ public class PLservice extends Service
         }
     }
 
-    void updateNotification(String title, String msg)
+    void updateNotification(String title, String msg, int icon)
     {
         if(mNotificationManager != null) {
 
@@ -301,7 +303,7 @@ public class PLservice extends Service
 
             Notification notification = new Notification.Builder(this)
                     .setContentTitle(title)
-                    .setContentText(msg).setSmallIcon(R.drawable.start)
+                    .setContentText(msg).setSmallIcon(icon)
                     .setContentIntent(resultPendingIntent)
                     .build();
             // mId allows you to update the notification later on.
@@ -329,6 +331,46 @@ public class PLservice extends Service
         stopScan();
         mCurrentState=ScanState.NOT_RUNNING;
 
+        if( ((byte)data[15] == (byte)0x9A) && ((byte)data[16] == (byte)0x66) )//Our 16bit service number
+        {
+            float temperature = getTemp( new byte[] {data[18],data[19],data[20],data[21]} );
+
+            //Now we need to check the state of the
+            byte state = data[24];
+            updateNotificationStatus(state);
+
+            Intent mIntent = new Intent();
+            mIntent.putExtra(MyActivity.BeaconResultsExtraStatus, state);
+            mIntent.putExtra(MyActivity.BeaconResultsExtraTemperature,temperature);
+            mIntent.setAction(MyActivity.BeaconDetails);
+            sendBroadcast(mIntent);
+
+
+        }//We dont care here because this is not our beacon
+        //We need our beacon data.
+    }
+
+
+    private void updateNotificationStatus(byte sts)
+    {
+        //
+        if(sts == (byte)0xAA)
+        {
+            //We good
+            updateNotification("PondLife","Level is ok",R.drawable.good);
+        }
+    }
+
+    private float getTemp(byte[] data)
+    {
+        int tempBUF = data[2];
+        tempBUF = tempBUF << 8;
+        tempBUF |= (data[1]);
+        tempBUF = tempBUF << 8;
+        tempBUF |= ((data[0]) & 0xFF);
+        float flTemp = (float) tempBUF;
+        flTemp = flTemp/10;
+        return flTemp;
     }
 
 }

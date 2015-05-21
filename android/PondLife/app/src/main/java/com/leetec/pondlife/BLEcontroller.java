@@ -41,16 +41,17 @@ import android.util.Log;
 			public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord)
 			{
 				String devName = device.getName();
-				if(devName.equals(mDeviceName))
-				{
-					Log.i(MyActivity.TAG,"++++++++++++ DEVICE FOUND ++++++++++++");
-					mBLEAdpater.stopLeScan(mLeScanCallBack);
-					//We have our device and we have stopped the scan
-					scanRecord[scanRecord.length - 1] = (byte) rssi;//We can use the last byte for our rssi.
-					returnAdvData(scanRecord);//Send the data.
-				}
-				Log.i(MyActivity.TAG,"++++++++++++ DEVICE ++++++++++++");
-			}
+                if(devName != null) {
+                    if (devName.equals(mDeviceName)) {
+                        Log.i(MyActivity.TAG, "++++++++++++ DEVICE FOUND ++++++++++++");
+                        mBLEAdpater.stopLeScan(mLeScanCallBack);
+                        //We have our device and we have stopped the scan
+                        scanRecord[scanRecord.length - 1] = (byte) rssi;//We can use the last byte for our rssi.
+                        returnAdvData(scanRecord);//Send the data.
+                    }
+                    Log.i(MyActivity.TAG, "++++++++++++ DEVICE ++++++++++++");
+                }
+            }
 		};
 		try{
 			//UUID mplU = UUID.fromString(str_pl_UUID);

@@ -58,7 +58,7 @@ public class PLservice extends Service
 
             if(action == MyActivity.BR_StartScan)
             {
-
+                //updateNotification("PondLife","Silent scanning.",R.drawable.start);
                 updateNotification("Pondlife","Silent running...",R.drawable.start);//Only update this if the user starts the scan
 
                 USER_REQUESTED_MODE=true;
@@ -152,7 +152,7 @@ public class PLservice extends Service
     {
         if( (mBluetoothAdapter != null) && (mBluetoothAdapter.isEnabled()) )
         {
-            updateNotification("PondLife","Silent scanning.",R.drawable.start);
+
 
             if(mCurrentState != ScanState.RUNNING) {
                 if(mBLEController == null) {

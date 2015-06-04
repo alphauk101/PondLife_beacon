@@ -43,7 +43,7 @@ procedure takeReadings()
 	call hardware_io_port_read(0,$02)(resCode,port,state)
 	#check the result code first
 	if resCode = 0 then
-		if state > 0 then
+		if state = 0 then
 			call setRespData($AA)
 		else
 			call setRespData($FF)#Failed
@@ -70,7 +70,7 @@ event system_boot(major ,minor ,patch ,build ,ll_version ,protocol_version ,hw )
 
 	#Allow pairing
 	call sm_set_bondable_mode(0)
-	call gap_set_adv_parameters($3E80,$3E80, $07) #<-Sets the Advertising sped to really slow
+	call gap_set_adv_parameters($1F40,$3200, $07) #<-Sets the Advertising sped to really slow
 	#set timer to periodically create an interrupt with interval of 1s
 	#call hardware_set_soft_timer($f0000,0,0) #<- Slower rate
 	call hardware_set_soft_timer($50000,0,0)
@@ -79,7 +79,7 @@ event system_boot(major ,minor ,patch ,build ,ll_version ,protocol_version ,hw )
 	#Set adv data.
 	advData(0) = 2 #length
 	advData(1) = $01 #Flags
-	advData(2) = $02 # General Discoverable
+	advData(2) = $01 # General Discoverable
 	#UUID = 3b 66 17 a0-fb ac-11 e3-a3 ac-08 00 20 0c 9a 66 - service if I want it
 	advData(3) = 9
 	advData(4) = $08

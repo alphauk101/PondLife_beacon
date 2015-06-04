@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
@@ -28,6 +29,7 @@ public class PLservice extends Service
     private byte GOOD_BYTE = (byte)0xAA;
 
     private static int LONG_WAIT = ((1000*60)*2);
+
     //private static int SHORT_WAIT = ((1000*60)*1);
     private static int SHORT_WAIT = 10000;
 
@@ -130,15 +132,15 @@ public class PLservice extends Service
 
         checkBluetoothAdapter();
 
-
+/*
         Notification notification = new Notification.Builder(this)
                 .setContentTitle("Pond Life")
                 .setContentText("Service Started").setSmallIcon(R.drawable.start)
                 .build();
-
+*/
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         // mId allows you to update the notification later on.
-        mNotificationManager.notify(NOTIFICATION_ID, notification);
+        //mNotificationManager.notify(NOTIFICATION_ID, notification);
 
         super.onCreate();
     }
@@ -152,7 +154,6 @@ public class PLservice extends Service
     {
         if( (mBluetoothAdapter != null) && (mBluetoothAdapter.isEnabled()) )
         {
-
 
             if(mCurrentState != ScanState.RUNNING) {
                 if(mBLEController == null) {
@@ -312,6 +313,32 @@ public class PLservice extends Service
         }
     }
 
+    void issueAlert()
+    {
+
+        if(mNotificationManager != null) {
+
+            Intent resultIntent = new Intent(this, MyActivity.class);
+            PendingIntent resultPendingIntent =
+                    PendingIntent.getActivity(this,0,resultIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT
+                    );
+            Uri muri = Uri.parse("android.resource://" + getApplicationContext().getPackageName() + "/" + R.raw.horn);
+            Notification notification = new Notification.Builder(this)
+                    .setContentTitle("ALERT ALERT")
+                    .setContentText("POND LEVEL DROPPING!")
+                    .setSmallIcon(R.drawable.bad)
+                    .setContentIntent(resultPendingIntent)
+                    .setSound(muri)
+                    .build();
+
+
+            // mId allows you to update the notification later on.
+            mNotificationManager.notify(NOTIFICATION_ID, notification);
+
+        }
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -358,6 +385,11 @@ public class PLservice extends Service
         {
             //We good
             updateNotification("PondLife","Level is ok",R.drawable.good);
+        }
+        else if(sts == (byte)0xFF){
+            issueAlert();
+        }else{
+            updateNotification("PondLife","Hmm talk to Lee, somethings wrong!",R.drawable.bad);
         }
     }
 

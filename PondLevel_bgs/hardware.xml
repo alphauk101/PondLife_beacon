@@ -5,5 +5,6 @@
     <usb enable="false" endpoint="api"/>
     <txpower power="15" bias="5" />
 	<script enable="true" />
+	<sleep enable="true"/>
     <pmux regulator_pin="7" />
 </hardware>

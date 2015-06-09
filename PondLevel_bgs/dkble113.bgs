@@ -70,7 +70,7 @@ event system_boot(major ,minor ,patch ,build ,ll_version ,protocol_version ,hw )
 
 	#Allow pairing
 	call sm_set_bondable_mode(0)
-	call gap_set_adv_parameters($1F40,$3200, $07) #<-Sets the Advertising sped to really slow
+	call gap_set_adv_parameters($C80,$1900, $07) #<-Sets the Advertising sped to really slow
 	#set timer to periodically create an interrupt with interval of 1s
 	#call hardware_set_soft_timer($f0000,0,0) #<- Slower rate
 	call hardware_set_soft_timer($50000,0,0)

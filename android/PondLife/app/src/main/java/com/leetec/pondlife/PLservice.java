@@ -28,12 +28,12 @@ public class PLservice extends Service
 
     private byte GOOD_BYTE = (byte)0xAA;
 
-    private static int LONG_WAIT = ((1000*60)*2);
+    private static int LONG_WAIT = ((1000*60)*5);
 
     //private static int SHORT_WAIT = ((1000*60)*1);
-    private static int SHORT_WAIT = 10000;
+    private static int SHORT_WAIT = ((1000*60)*2);
 
-    private static int WAIT_WHILE_BT_OFF = ((1000*60)*30);//we wait 30 mins before trying again
+
 
    private static int mBeaconCount = 0;
 
@@ -192,7 +192,7 @@ public class PLservice extends Service
         }else{
             Log.i(MyActivity.TAG,"!!!!!!!!!!!!!!! Unable to use BT adapter so a scan has not been started!!!!!!!!!!!!!!!!!!!");
             checkBluetoothAdapter();
-            updateNotification("PondLife","Bluetooth not enabled not scanning!",R.drawable.start);
+            //updateNotification("PondLife","Bluetooth not enabled not scanning!",R.drawable.start);
             mCurrentState = ScanState.NOT_RUNNING;//Make sure we know were not running
 
             //We need to make sure we set up a stop timer but now it can wait extra time
@@ -201,7 +201,7 @@ public class PLservice extends Service
                 public void run() {
                     stopScan();
                 }
-            },WAIT_WHILE_BT_OFF);
+            },LONG_WAIT);
 
             return false;
         }

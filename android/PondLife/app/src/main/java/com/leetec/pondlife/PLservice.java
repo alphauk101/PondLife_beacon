@@ -12,18 +12,23 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
+
 
 /**
  * Created by Lee_Laptop on 11/05/2015.
  */
 public class PLservice extends Service
 {
+    String TAG = "PLS";
 
     private NotificationManager mNotificationManager = null;
     private final int NOTIFICATION_ID = 0;
     private static int SCAN_TIMEOUT = 5000;
     private static boolean USER_REQUESTED_MODE = false; //This represents what the user has requested
+    private PowerManager _PwrMgr;
+    private PowerManager.WakeLock _WakeLock;
     //we need to keep track if they've stopped the scan then we need to make sure we do
 
     private byte GOOD_BYTE = (byte)0xAA;
@@ -56,12 +61,16 @@ public class PLservice extends Service
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+
             Log.i(MyActivity.TAG,"Service Broadcaster got a message: " + action);
 
             if(action == MyActivity.BR_StartScan)
             {
+
+                Log.i(TAG,">>>>>>>>>>>>>>>>>>>>>>>>> BR - SCAN START REQUESTED");
+
                 //updateNotification("PondLife","Silent scanning.",R.drawable.start);
-                updateNotification("Pondlife","Silent running...",R.drawable.start);//Only update this if the user starts the scan
+                updateNotification("Pondlife", "Silent running...", R.drawable.start);//Only update this if the user starts the scan
 
                 USER_REQUESTED_MODE=true;
                 if(startScan())
@@ -75,6 +84,8 @@ public class PLservice extends Service
 
             }else if(action == MyActivity.BR_StopScan)
             {
+                Log.i(TAG,">>>>>>>>>>>>>>>>>>>>>>>>>BR - SCAN STOP REQUESTED");
+
                 updateNotification("Pondlife","Scan stopped.",R.drawable.start);//Only update this if the user starts the scan
                 USER_REQUESTED_MODE = false;
                 stopScan();
@@ -119,18 +130,23 @@ public class PLservice extends Service
     @Override
     public void onCreate() {
 
+        Log.i(TAG,">>>>>>>>>>>>>>>>>>>>>>>>> SERVICE ONCREATE CALLED");
+
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(MyActivity.BR_StartScan);
         mIntentFilter.addAction(MyActivity.BR_StopScan);
         mIntentFilter.addAction(MyActivity.getScanStatus);
         mIntentFilter.addAction(MyActivity.checkBTstate);
-        registerReceiver(mServiceBroadcastReciever,mIntentFilter);
+        registerReceiver(mServiceBroadcastReciever, mIntentFilter);
 
         Intent infoIntent = new Intent();
         infoIntent.setAction(MyActivity.startService);
         sendBroadcast(infoIntent);
 
         checkBluetoothAdapter();
+
+        _PwrMgr = (PowerManager)getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        _WakeLock = _PwrMgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"PondLife");
 
 /*
         Notification notification = new Notification.Builder(this)
@@ -152,6 +168,7 @@ public class PLservice extends Service
      */
     public boolean startScan()
     {
+        _WakeLock.acquire();
         if( (mBluetoothAdapter != null) && (mBluetoothAdapter.isEnabled()) )
         {
 
@@ -184,13 +201,15 @@ public class PLservice extends Service
                     }
                 },SCAN_TIMEOUT);
 
+                Log.i(TAG, ">>>>>>>>>>>>>>>>>>>>>>>>> BLE SCAN HAS STARTED AND WILL SCAN FOR: " + String.valueOf(SCAN_TIMEOUT/1000) + " Secs");
+
                 return true;
             }else{
                 //We are already running
                 return false;
             }
         }else{
-            Log.i(MyActivity.TAG,"!!!!!!!!!!!!!!! Unable to use BT adapter so a scan has not been started!!!!!!!!!!!!!!!!!!!");
+            Log.i(TAG,">>>>>>>>>>>>>>>>>>>>>>>>> BLUETOOTH ADAPTER IS NULL OR NOT ENABLED");
             checkBluetoothAdapter();
             //updateNotification("PondLife","Bluetooth not enabled not scanning!",R.drawable.start);
             mCurrentState = ScanState.NOT_RUNNING;//Make sure we know were not running
@@ -250,13 +269,16 @@ public class PLservice extends Service
         Log.i(MyActivity.TAG,">>>>>>>>>>>>>>>>>>> Scan stopped");
         if(mCurrentState == ScanState.RUNNING)
         {
+            Log.i(TAG,">>>>>>>>>>>>>>>>>>>>>>>>> STOP SCAN HAS BEEN COMPLETED");
             mBLEController.stopScanning();
             mCurrentState = ScanState.NOT_RUNNING;
+        }else{
+            Log.i(TAG,">>>>>>>>>>>>>>>>>>>>>>>>> SCAN NOT STOPPED DUE TO THE FACT SCAN WAS NOT RUNNING");
         }
         if(USER_REQUESTED_MODE)//We are still requested by the activity to carry on scanning
         {
 
-            Log.i(MyActivity.TAG,"Resetting for next scan.");
+
 
             //We have still got to carry on running because the user has not stopped us
 
@@ -266,10 +288,10 @@ public class PLservice extends Service
             if(mBeaconCount>0)
             {
                 //We have one so we could probably wait 20 mins before trying again
-                Log.i(MyActivity.TAG,"Resetting to scan in: " + String.valueOf(LONG_WAIT) + " M Seconds");
+                Log.i(TAG,">>>>>>>> Waiting for: " + String.valueOf(LONG_WAIT/1000) + " Seconds");
                 timer = LONG_WAIT;
             }else{
-                Log.i(MyActivity.TAG,"Resetting to scan in: " + String.valueOf(SHORT_WAIT) + " M Seconds");
+                Log.i(TAG,">>>>>>>>> Waiting for: " + String.valueOf(SHORT_WAIT/1000) + " Seconds");
                 timer = SHORT_WAIT;
             }
 
@@ -283,6 +305,8 @@ public class PLservice extends Service
             removeNotification();
             Log.i(MyActivity.TAG,"User has requested a stop scan.");
         }
+
+        _WakeLock.release();
     }
 
     void removeNotification()
@@ -342,7 +366,7 @@ public class PLservice extends Service
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.i(MyActivity.TAG,"!!!!!!!!!!!! Service destroyed");
+        Log.i(TAG,">>>>>>>>>>>>>>>>>>>>>>>>> SERVICE HAS BEEN DESTROYED");
         unregisterReceiver(mServiceBroadcastReciever);
     }
 

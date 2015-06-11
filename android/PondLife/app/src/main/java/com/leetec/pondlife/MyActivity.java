@@ -13,7 +13,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import java.util.Calendar;
 
 
@@ -162,6 +161,7 @@ public class MyActivity extends Activity {
     {
         //Start Service
         Intent serviceInt = new Intent(this,PLservice.class);
+
         startService(serviceInt);
     }
 
